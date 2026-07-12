@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  patches:
+    name: RMK patches
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 3w6hs-rmk-config
+    steps:
+      - name: Check out firmware config
+        uses: actions/checkout@v7
+        with:
+          path: 3w6hs-rmk-config
+
+      - name: Read pinned RMK revision
+        id: rmk
+        run: echo "revision=$(cat patch/rmk-revision)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out upstream RMK
+        uses: actions/checkout@v7
+        with:
+          repository: rmk-rs/rmk
+          ref: ${{ steps.rmk.outputs.revision }}
+          path: rmk
+
+      # Paths inside the patch are relative to the rmk repo root, so apply
+      # from there (the two checkouts are siblings).
+      - name: Check wellum patch applies
+        run: git -C ../rmk apply --check ../3w6hs-rmk-config/patch/wellum.patch
+
+      - name: Apply wellum patch to upstream RMK
+        run: |
+          git -C ../rmk apply ../3w6hs-rmk-config/patch/wellum.patch
+          git -C ../rmk diff --check
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      # wellum.patch modifies core keyboard behavior (keyboard.rs, oneshot.rs)
+      # and ships simulator scenarios — this is the only automated behavioral
+      # check of the patched tree. Needs nextest: the simulator's MockDriver is
+      # a process-global singleton requiring per-test isolation. Runs from the
+      # rmk crate dir: the config repo's .cargo/config.toml pins build.target
+      # to thumbv6m-none-eabi, which would build the host-only test suite for
+      # an embedded target.
+      - name: Run RMK simulator tests on patched tree
+        run: cargo nextest run --no-default-features --features "split,storage,async_matrix,_ble,rynk"
+        working-directory: rmk/rmk
+
+  firmware:
+    name: Firmware
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 3w6hs-rmk-config
+    steps:
+      - name: Check out firmware config
+        uses: actions/checkout@v7
+        with:
+          path: 3w6hs-rmk-config
+
+      - name: Read pinned RMK revision
+        id: rmk
+        run: echo "revision=$(cat patch/rmk-revision)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out upstream RMK
+        uses: actions/checkout@v7
+        with:
+          repository: rmk-rs/rmk
+          ref: ${{ steps.rmk.outputs.revision }}
+          path: rmk
+
+      - name: Apply wellum patch to upstream RMK
+        run: git -C ../rmk apply ../3w6hs-rmk-config/patch/wellum.patch
+
+      # The pinned toolchain (rust-toolchain.toml) and the thumbv6m-none-eabi
+      # target are installed automatically by rustup on the first cargo
+      # invocation — no ARM C cross-toolchain needed for thumbv6m.
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 3w6hs-rmk-config
+
+      - name: Check Rust formatting
+        run: cargo fmt --check
+
+      - name: Check firmware
+        run: |
+          cargo check --locked
+          cargo clippy --locked -- -D warnings
+
+  artifacts:
+    name: Firmware artifacts
+    needs: [patches, firmware]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 3w6hs-rmk-config
+    steps:
+      - name: Check out firmware config
+        uses: actions/checkout@v7
+        with:
+          path: 3w6hs-rmk-config
+
+      - name: Read pinned RMK revision
+        id: rmk
+        run: echo "revision=$(cat patch/rmk-revision)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out upstream RMK
+        uses: actions/checkout@v7
+        with:
+          repository: rmk-rs/rmk
+          ref: ${{ steps.rmk.outputs.revision }}
+          path: rmk
+
+      - name: Apply wellum patch to upstream RMK
+        run: git -C ../rmk apply ../3w6hs-rmk-config/patch/wellum.patch
+
+      # The pinned toolchain (rust-toolchain.toml) is installed automatically
+      # by rustup on the first cargo invocation.
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 3w6hs-rmk-config
+
+      - name: Install cargo-make
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make@0.37.24
+
+      - name: Build UF2 firmware
+        run: cargo make uf2
+
+      - name: Verify firmware files
+        run: test -s firmware/3w6hs.uf2
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware-${{ github.sha }}
+          path: 3w6hs-rmk-config/firmware/*.uf2
+          if-no-files-found: error

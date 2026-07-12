@@ -1,0 +1,138 @@
+[keyboard]
+name = "3W6HS"
+product_name = "3W6HS"
+vendor_id = 0xBEEB
+product_id = 0x0003
+manufacturer = "beekeeb"
+chip = "rp2040"
+
+[host]
+vial_enabled = false
+rynk_enabled = false
+
+[matrix]
+row_pins = ["PIN_7", "PIN_8", "PIN_9", "PIN_10", "PIN_2", "PIN_3", "PIN_4", "PIN_5"]
+col_pins = ["PIN_11", "PIN_12", "PIN_13", "PIN_14", "PIN_15"]
+
+[behavior.tri_layer]
+upper = 3
+lower = 4
+adjust = 5
+
+[behavior.one_shot]
+timeout = "300s"
+
+[behavior.one_shot_modifiers]
+activate_on_keypress = true
+cancel_ossm_on_layer_enter = true
+
+[layout]
+rows = 8
+cols = 5
+map = """
+(0,0,L) (0,1,L) (0,2,L) (0,3,L) (0,4,L)    (4,0,R) (4,1,R) (4,2,R) (4,3,R) (4,4,R)
+(1,0,L) (1,1,L) (1,2,L) (1,3,L) (1,4,L)    (5,0,R) (5,1,R) (5,2,R) (5,3,R) (5,4,R)
+(2,0,L) (2,1,L) (2,2,L) (2,3,L) (2,4,L)    (6,0,R) (6,1,R) (6,2,R) (6,3,R) (6,4,R)
+                (3,2,L) (3,3,L) (3,4,L)    (7,0,R) (7,1,R) (7,2,R)
+"""
+
+[keymap]
+layers = 6
+
+[aliases]
+# Universal Layout mapping
+SQuot     = "Grave"
+DQuot     = "WM(Grave, LShift)"
+Grave     = "WM(Grave, RAlt)"
+Pipe      = "WM(Backslash, LShift)"
+Backslash = "WM(Backslash, RAlt)"
+Nbsp      = "WM(Space, RAlt)"
+Comma     = "LeftBracket"
+Semicolon = "WM(LeftBracket, LShift)"
+Dot       = "RightBracket"
+Colon     = "WM(RightBracket, LShift)"
+Minus     = "Minus"
+Under     = "WM(Minus, LShift)"
+Equal     = "Equal"
+Plus      = "WM(Equal, LShift)"
+Slash     = "Backslash"
+LBracket  = "Dot"
+LBrace    = "WM(Dot, LShift)"
+RBracket  = "Slash"
+RBrace    = "WM(Slash, LShift)"
+Ampersand = "Comma"
+Tilde     = "Semicolon"
+# One-shot Modifiers mapping
+OSM_G     = "OSM(LGui)"
+OSM_A     = "OSM(LAlt)"
+OSM_C     = "OSM(LCtrl)"
+OSM_S     = "OSM(LShift)"
+# Window Management mapping
+LT_Alt    = "LatchTap(LAlt, Tab)"
+LT_Gui    = "LatchTap(LGui, Tab)"
+LT_Ctrl   = "LatchTap(LCtrl, Tab)"
+PrevSpace = "WM(Left,  LCtrl | LGui)"
+NextSpace = "WM(Right, LCtrl | LGui)"
+# Bluetooth profiles mapping
+BT_1      = "User0"
+BT_2      = "User1"
+BT_3      = "User2"
+BT_Next   = "User3"
+BT_Prev   = "User4"
+BT_Clear  = "User5"
+BT_Toggle = "User6" # Toggle between USB and BLE
+
+
+[[keymap.layer]] # 0
+name = "base_layer"
+keys = """
+Q          W          E          R          T          Y          U          I          O          P
+A          S          D          F          G          H          J          K          L          @Tilde
+Z          X          C          V          B          N          M          @Ampersand @LBracket  @RBracket
+                      CapsLock   Space      MO(3)      MO(4)      LShift     RAlt
+"""
+
+[[keymap.layer]] # 1
+name = "gam_layer"
+keys = """
+Tab        Q          W          E          R          No         No         Up         No         Tab
+LShift     A          S          D          F          No         Left       Down       Right      RShift
+LCtrl      Z          X          C          V          No         No         No         No         RCtrl
+                      LAlt       Space      MO(2)      TG(1)      Space      No
+"""
+
+[[keymap.layer]] # 2
+name = "gfn_layer"
+keys = """
+Kc5        Kc1        Kc2        Kc3        Kc4        @BT_Toggle @BT_1      @BT_2      @BT_3      @BT_Clear
+Kc0        Kc6        Kc7        Kc8        Kc9        No         No         No         No         No
+G          J          I          M          T          NumLock    No         No         No         No
+                      Escape     Enter      ___        ___        ___        No
+"""
+
+[[keymap.layer]] # 3
+name = "nav_layer"
+keys = """
+@LT_Ctrl   @LT_Alt    @LT_Gui    __         Escape     Escape     Home       End        Backspace  Delete
+@OSM_G     @OSM_A     @OSM_C     @OSM_S     Enter      Enter      Left       Down       Up         Right
+@PrevSpace @NextSpace TG(1)      pscr       Tab        Tab        PageUp     PageDown   Quote      NumLock
+                      ___        ___        ___        ___        ___        ___
+"""
+
+[[keymap.layer]] # 4
+name = "sym_layer"
+keys = """
+Kc1        Kc2        Kc3        Kc4        Kc5        Kc6        Kc7        Kc8        Kc9        Kc0
+@Tilde     @Grave     @SQuot     @DQuot     @Minus     @Plus      @OSM_S     @OSM_C     @OSM_A     @OSM_G
+@Backslash No         @Semicolon @Comma     @Under     @Equal     @Dot       @Colon     @Pipe      @Slash
+                      ___        ___        ___        ___        ___        ___
+"""
+
+[[keymap.layer]] # 5
+name = "num_layer"
+keys = """
+Kp1        Kp2        Kp3        Kp4        Kp5        Kp6        Kp7        Kp8        Kp9        Kp0
+@OSM_G     @OSM_A     @OSM_C     @OSM_S     F11        F12        @OSM_S     @OSM_C     @OSM_A     @OSM_G
+F1         F2         F3         F4         F5         F6         F7         F8         F9         F10
+                      ___        ___        ___        ___        ___        ___
+"""

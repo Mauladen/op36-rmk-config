@@ -1,0 +1,46 @@
+[tasks.install-llvm-tools]
+install_crate = { rustup_component_name = "llvm-tools" }
+
+[tasks.make-firmware-dir]
+command = "mkdir"
+args = ["-p", "firmware"]
+
+[tasks.build]
+command = "cargo"
+args = ["build", "--release"]
+dependencies = ["install-llvm-tools"]
+
+[tasks.objcopy]
+install_crate = { crate_name = "cargo-binutils", binary = "cargo", test_arg = [
+    "objcopy",
+    "--help",
+] }
+command = "cargo"
+args = [
+    "objcopy",
+    "--release",
+    "--bin",
+    "kb3w6hs",
+    "--",
+    "-O",
+    "ihex",
+    "firmware/3w6hs.hex",
+]
+dependencies = ["build", "make-firmware-dir"]
+
+[tasks.uf2]
+install_crate = { crate_name = "cargo-hex-to-uf2", binary = "cargo", test_arg = [
+    "hex-to-uf2",
+    "--help",
+] }
+command = "cargo"
+args = [
+    "hex-to-uf2",
+    "--input-path",
+    "firmware/3w6hs.hex",
+    "--output-path",
+    "firmware/3w6hs.uf2",
+    "--family",
+    "rp2040",
+]
+dependencies = ["objcopy"]

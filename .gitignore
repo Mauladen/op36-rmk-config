@@ -1,0 +1,12 @@
+target
+firmware
+bin
+node_modules
+
+*.bin
+*.elf
+*.hex
+*.uf2
+
+.DS_Store
+.autopilot/serve.*
